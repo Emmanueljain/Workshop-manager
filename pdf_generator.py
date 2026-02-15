@@ -5,11 +5,23 @@ import os
 import sys
 import datetime
 
-# Determine the base directory (works for both .py script and compiled .exe)
+# --- NEW: PyInstaller hidden folder logic ---
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# (We still need this for the INVOICES folder so it saves next to the .exe)
 if getattr(sys, 'frozen', False):
     BASE_DIR = os.path.dirname(sys.executable)
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# --------------------------------------------
 
 def generate_invoice_pdf(invoice_id):
     # 1. Fetch Full Invoice Data
@@ -40,7 +52,7 @@ def generate_invoice_pdf(invoice_id):
     """, (invoice['job_id'],))
     parts = cursor.fetchall()
 
-    # 3. Create INVOICES Folder
+    # 3. Create INVOICES Folder (Saves next to the actual .exe)
     folder_name = os.path.join(BASE_DIR, "INVOICES")
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
@@ -55,9 +67,9 @@ def generate_invoice_pdf(invoice_id):
     width, height = letter
 
     # --- Header with Logo ---
-    logo_path = os.path.join(BASE_DIR, "logo.png")
+    # NEW: Use the resource_path function to find the baked-in logo
+    logo_path = resource_path("logo.png")
     
-    # If the logo file exists, draw it and shift the shop text to the right
     if os.path.exists(logo_path):
         c.drawImage(logo_path, 50, height - 90, width=70, height=70, preserveAspectRatio=True, mask='auto')
         text_x = 135  # Shifted right
@@ -132,7 +144,6 @@ def generate_invoice_pdf(invoice_id):
     c.setFont("Helvetica-Bold", 14)
     c.drawString(350, y, "TOTAL:")
     
-    # Added a space between KWD and the amount for better readability
     c.drawRightString(width - 50, y, f"KWD {invoice['total_amount']:.2f}")
 
     # --- Footer ---
