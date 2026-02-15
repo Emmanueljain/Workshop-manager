@@ -2,7 +2,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from database import cursor
 import os
+import sys
 import datetime
+
+# Determine the base directory (works for both .py script and compiled .exe)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def generate_invoice_pdf(invoice_id):
     # 1. Fetch Full Invoice Data
@@ -33,31 +40,37 @@ def generate_invoice_pdf(invoice_id):
     """, (invoice['job_id'],))
     parts = cursor.fetchall()
 
-    # 3. Create INVOICES Folder (if not exists)
-    folder_name = "INVOICES"
+    # 3. Create INVOICES Folder
+    folder_name = os.path.join(BASE_DIR, "INVOICES")
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
 
     # 4. Define File Path
-    # Sanitize the filename to remove spaces or bad characters
     safe_name = invoice['name'].replace(" ", "_")
     filename = f"Invoice_{invoice_id}_{safe_name}.pdf"
-    
-    # Combine folder and filename (e.g., INVOICES/Invoice_1_Alice.pdf)
     full_path = os.path.join(folder_name, filename)
 
     # 5. Generate PDF
     c = canvas.Canvas(full_path, pagesize=letter)
     width, height = letter
 
-    # --- Header ---
+    # --- Header with Logo ---
+    logo_path = os.path.join(BASE_DIR, "logo.png")
+    
+    # If the logo file exists, draw it and shift the shop text to the right
+    if os.path.exists(logo_path):
+        c.drawImage(logo_path, 50, height - 90, width=70, height=70, preserveAspectRatio=True, mask='auto')
+        text_x = 135  # Shifted right
+    else:
+        text_x = 50   # Default left position if no logo
+
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(50, height - 50, "MY CAR REPAIR SHOP")  # Change to your Shop Name
+    c.drawString(text_x, height - 50, "Gulf Creativity") 
 
     c.setFont("Helvetica", 10)
-    c.drawString(50, height - 70, "Plot 42, Industrial Area") # Change Address
-    c.drawString(50, height - 85, "Phone: +91 98765 43210") # Change Phone
-
+    c.drawString(text_x, height - 70, "Mahboula Block No:1,Street No:125,Building No:46") 
+    c.drawString(text_x, height - 85, "Phone: 965 65791777") 
+    
     c.setFont("Helvetica-Bold", 16)
     c.drawRightString(width - 50, height - 50, "INVOICE")
     
@@ -118,7 +131,9 @@ def generate_invoice_pdf(invoice_id):
     y -= 30
     c.setFont("Helvetica-Bold", 14)
     c.drawString(350, y, "TOTAL:")
-    c.drawRightString(width - 50, y, f"KWD{invoice['total_amount']:.2f}")
+    
+    # Added a space between KWD and the amount for better readability
+    c.drawRightString(width - 50, y, f"KWD {invoice['total_amount']:.2f}")
 
     # --- Footer ---
     c.setFont("Helvetica-Oblique", 10)
@@ -126,5 +141,4 @@ def generate_invoice_pdf(invoice_id):
 
     c.save()
     
-    # Return the full path so the OS can find it to open
     return f"PDF Saved: {full_path}"
