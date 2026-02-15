@@ -87,7 +87,4 @@ python -m PyInstaller --noconsole --onefile --name="WorkshopManager" main.py
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
-Once your code is uploaded, would you like me to guide you through clicking the button on GitHub to automatically generate the actual `LICENSE` file so it officially links to that bottom section?
-
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
