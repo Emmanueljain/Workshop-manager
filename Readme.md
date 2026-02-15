@@ -45,8 +45,7 @@ You need Python 3 installed on your machine.
    ```bash
    git clone [https://github.com/yourusername/workshop-manager.git](https://github.com/yourusername/workshop-manager.git)
    cd workshop-manager
-
-```
+  ``
 
 2. Install the required PDF library:
 ```bash
